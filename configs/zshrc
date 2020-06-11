@@ -1,7 +1,7 @@
 export TERM="xterm-256color"
 export ZSH=/home/op/.oh-my-zsh
 
-ZSH_THEME="nicoulaj"
+ZSH_THEME="mrtazz"
 plugins=(dircycle github z autojump rails archlinux zsh-navigation-tools docker vagrant cp ruby)
 
 source $ZSH/oh-my-zsh.sh
@@ -85,8 +85,19 @@ export FILES_SMALL="/home/op/lists/seclists/Discovery/Web-Content/raft-small-fil
 alias ls=" ls --color"
 alias wclone="wget -H -p -k"
 alias vim="nvim"
-
+alias nmap="grc nmap"
 
 # added by pipsi (https://github.com/mitsuhiko/pipsi)
 export PATH="/home/op/.local/bin:$PATH"
 source /home/op/.oh-my-zsh/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+
+dirs(){
+        name=$(echo $1 | unfurl -u domains)
+        x=$(date +%Y%m%d%H%M%S)
+        mkdir -p ~/work
+        mkdir -p ~/work/$name
+        ffuf -w $FILES_LARGE -u $1FUZZ -D -e asp,aspx,cgi,cfml,CFM,htm,html,json,jsp,php,phtml,pl,py,sh,shtml,sql,txt,xml,xhtml,tar,tar.gz,tgz,war,zip,swp,src,jar,java,log,bin,js,db -t 150 -o ~/work/$name/$name_$x.json
+}
+
+# added by pipsi (https://github.com/mitsuhiko/pipsi)
+export PATH="/home/op/.local/bin:$PATH"

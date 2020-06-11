@@ -19,11 +19,11 @@
         {
             "type":"shell",
             "inline": [
-                "touch ~/.provisioned",
+            	"fallocate -l 2G /swap && chmod 600 /swap && mkswap /swap && swapon /swap",
                 "add-apt-repository -y ppa:longsleep/golang-backports",
                 "apt-get update -qq",
                 "apt-get upgrade -qq",
-                "sudo apt-get -y install apt-transport-https ca-certificates p7zip zsh curl figlet zlib1g-dev python python-pip tor proxychains python3.7 default-jdk python3-pip python3-venv libpcap-dev ruby ruby-dev nmap vim dirmngr gnupg-agent gnupg2 libpq-dev software-properties-common golang-go fonts-liberation libappindicator3-1 libcairo2 libgbm1 libgdk-pixbuf2.0-0 libgtk-3-0 libxss1 xdg-utils masscan zmap sqlmap dirb jq ufw neovim ranger",
+                "sudo apt-get -y install apt-transport-https ca-certificates debian-keyring p7zip zsh curl figlet zlib1g-dev python python-pip tor proxychains python3.7 default-jdk python3-pip python3-venv libpcap-dev ruby ruby-dev nmap vim dirmngr gnupg-agent gnupg2 libpq-dev software-properties-common golang-go fonts-liberation libappindicator3-1 libcairo2 libgbm1 libgdk-pixbuf2.0-0 libgtk-3-0 libxss1 xdg-utils masscan zmap sqlmap dirb jq ufw neovim ranger bat grc mosh",
                 "ufw allow 22",
                 "ufw allow 2266",
                 "ufw allow 60000/udp",
@@ -45,12 +45,12 @@
                 "wget https://bootstrap.pypa.io/get-pip.py",
                 "python3.7 get-pip.py",
                 "pip install aiodnsbrute docker-py",
-                "gem install bundler",
+                "gem install bundler wpscan nmap2json",
                 "systemctl start docker",
                 "systemctl enable tor",
                 "ufw --force enable",
                 "useradd -G sudo,docker -s /usr/bin/zsh -m op",
-                "mkdir -p /home/op/.ssh /home/op/c2 /home/op/lists /home/op/bin /home/op/.config/",
+                "mkdir -p /home/op/.ssh /home/op/c2 /home/op/lists /home/op/bin /home/op/.config/ /home/op/work/",
                 "chown -R op:users /home/op",
                 "echo 'op:{{ user `do_key` }}' | chpasswd",
                 "rm /etc/resolv.conf",
@@ -67,11 +67,6 @@
             "source":"./configs/add-path",
             "destination":"/home/op/bin/add-path"
         },
-		 {
-            "type":"file",
-            "source":"./configs/tmux-splash.sh",
-            "destination":"/home/op/bin/tmux-splash.sh"
-        },
         {
             "type":"file",
             "source":"./configs/authorized_keys",
@@ -85,7 +80,12 @@
         {
             "type":"file",
             "source":"./configs/tmux.conf.local",
-            "destination":"/home/op/.tmux.local"
+            "destination":"/home/op/.tmux.conf.local"
+        },
+        {
+            "type":"file",
+            "source":"./configs/tmux-splash.sh",
+            "destination":"/home/op/bin/tmux-splash.sh"
         },
 		{
             "type":"file",
@@ -136,13 +136,20 @@
                 "git clone https://github.com/navisecdelta/PwnFile.git /home/op/hashes/pwnfile",
                 "git clone https://github.com/lgandx/Responder.git /home/op/hashes/responder",
                 "git clone https://github.com/danielmiessler/SecLists.git /home/op/lists/seclists",
+                "git clone https://github.com/vortexau/dnsvalidator.git /home/op/recon/dnsvalidator && cd /home/op/recon/dnsvalidator/ && sudo python3 setup.py install",
                 "git clone https://github.com/rofl0r/proxychains-ng.git && cd proxychains-ng && make && make install && cd .. && sudo rm -r proxychains-ng",
+                "git clone https://github.com/securing/DumpsterDiver.git /home/op/recon/DumpsterDiver && cd /home/op/recon/DumpsterDiver && pip3 install --ignore-installed -r requirements.txt",
+                "git clone https://github.com/1ndianl33t/Gf-Patterns /home/op/.gf",
                 "wget -O /home/op/lists/jhaddix-all.txt https://gist.githubusercontent.com/jhaddix/86a06c5dc309d08580a018c66354a056/raw/96f4e51d96b2203f19f6381c8c545b278eaa0837/all.txt",
                 "cd /home/op && tar -xf /home/op/.oh-my-zsh.tar.gz",
                 "cd /home/op/.config/ && tar -xf /home/op/.config/nvim.tar.gz",
                 "cd /home/op/recon/emailgen && bundle update --bundler",
                 "cd /home/op/recon/emailgen && bundle install",
 				"echo \"@hunter_key = '{{ user `hunter_key` }}'\" >> /home/op/recon/emailgen/tokens.rb",
+                "echo 'Setting up sn0int repository'",
+                "gpg -a --export --keyring /usr/share/keyrings/debian-maintainers.gpg git@rxv.cc | apt-key add - && apt-key adv --keyserver keyserver.ubuntu.com --refresh-keys git@rxv.cc && echo deb http://apt.vulns.sexy stable main >> /etc/apt/sources.list.d/apt-vulns-sexy.list && apt-get update",
+                "echo 'Installing sn0int'",
+                "apt-get -y install sn0int",
                 "echo 'Installing Httprobe'",
 				"/bin/su -l op -c 'go get -u github.com/tomnomnom/httprobe'",
                 "echo 'Installing Neovim Plugin manager'",
@@ -169,12 +176,25 @@
 				"/bin/su -l op -c 'go get -u github.com/003random/getJS'",
 				"echo 'Installing concurl'",
 				"/bin/su -l op -c 'go get -u github.com/tomnomnom/hacks/concurl'",
+				"echo 'Installing concurl'",
+				"/bin/su -l op -c 'go get -u github.com/1ndianl33t/urlprobe'",
                 "echo 'Installing gau'",
 				"/bin/su -l op -c 'GO111MODULE=on go get -u github.com/lc/gau'",
-                "echo 'Installing fprobe'",
-				"/bin/su -l op -c 'GO111MODULE=on go get -u github.com/theblackturtle/fprobe'",
+                "echo 'Installing dnsprobe'",
+                "/bin/su -l op -c 'GO111MODULE=on go get -u -v github.com/projectdiscovery/dnsprobe'",
+                "echo 'Installing shuffledns'",
+                "/bin/su -l op -c 'GO111MODULE=on go get -u -v github.com/projectdiscovery/shuffledns/cmd/shuffledns'",
+                "echo 'Installing nuclei'",
+                "/bin/su -l op -c 'GO111MODULE=on go get -u -v github.com/projectdiscovery/nuclei/cmd/nuclei'",
+                "echo 'Installing chaos client'",
+                "/bin/su -l op -c 'GO111MODULE=on go get -u github.com/projectdiscovery/chaos-client/cmd/chaos'",
+                "echo 'Installing unfurl'",
+				"/bin/su -l op -c 'go get -u github.com/tomnomnom/unfurl'",
+                "echo 'Installing suback - this takes a while'",
+				"/bin/su -l op -c 'go get -u github.com/haccer/subjack/'",
                 "echo 'Installing subgen'",
 				"/bin/su -l op -c 'go get -u github.com/pry0cc/subgen'",
+				"/bin/su -l op -c 'GO111MODULE=on go get -u github.com/theblackturtle/fprobe'",
                 "wget -O /tmp/aquatone.zip https://github.com/michenriksen/aquatone/releases/download/v1.7.0/aquatone_linux_amd64_1.7.0.zip && cd /tmp/ && unzip /tmp/aquatone.zip && mv /tmp/aquatone /home/op/go/bin/aquatone",
                 "wget -O /tmp/amass.zip https://github.com/OWASP/Amass/releases/download/v3.6.0/amass_v3.6.0_linux_amd64.zip && cd /tmp/ && unzip /tmp/amass.zip && mv /tmp/amass_v3.6.0_linux_amd64/amass /home/op/go/bin/amass",
                 "wget -O /tmp/subfinder.tar https://github.com/projectdiscovery/subfinder/releases/download/v2.3.3/subfinder-linux-amd64.tar && cd /tmp/ && tar -xvf /tmp/subfinder.tar && mv /tmp/subfinder-linux-amd64 /home/op/go/bin/subfinder",
@@ -185,11 +205,6 @@
                 "sudo chmod +x /etc/update-motd.d/00-header"
             ]
         },
-		{
-			"type":"file",
-			"source":"./configs/crobatrc",
-			"destination":"/home/op/.crobatrc"
-		},
         {
             "type":"shell",
             "inline": [

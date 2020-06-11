@@ -24,30 +24,26 @@ BCyan='\033[1;36m'        # Cyan
 BWhite='\033[1;37m'       # White
 
 instance=$(cat ~/.axiom/profile.json | jq -r '.instance')
-restore_box=""
+command="$1"
 
 if [ ! -z "$2" ]
 then
     instance="$2"
 fi
 
+
 if [ -z "$1" ]
 then
-	restore_box=$(ls ~/.axiom/boxes/ | fzf)
-else
-	restore_box="$1"
-fi
-
-if [[ $restore_box =~ "/" ]]
-then
-    restore_box=$(echo $restore_box | sed 's/\//-/g')
+    echo "Provide an argument n00b!"
+    exit 0
 fi
 
 ip=$(doctl compute droplet list | grep $instance | awk '{ print $3 }')
-echo -e "${BWhite}Restoring $restore_box to $instance at $ip ${Color_Off}"
+echo -e "${BWhite}Executing in background to $instance at $ip ${Color_Off}"
 echo -n -e "${Blue}" 
 
-rsync -avzr -e "ssh -p2266 -o StrictHostKeyChecking=no" --progress --include-from=$HOME/.axiom/boxes/backup-files.txt ~/.axiom/boxes/"$restore_box"/ op@"$ip":~/
+ssh -p2266 op@"$ip" 'tmux new-session -d -t main'
+ssh -p2266 op@"$ip" tmux send-keys "'$1' Enter"
 
 echo -n -e "${Color_Off}" 
-echo -e "${BGreen}Restore of '$restore_box' to '$instance' successful!${Color_Off}" 
+echo -e "${BGreen}Execute on $instance' successful!${Color_Off}" 
